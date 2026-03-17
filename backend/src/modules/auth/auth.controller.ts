@@ -53,12 +53,18 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     const accessToken = generateAccessToken(user.id);
     const refreshToken = generateRefreshToken(user.id);
 
-    // Store refresh token in database
-    await prisma.refreshToken.create({
-      data: {
+    // Store refresh token in database (Handle potential collision by upserting if needed, 
+    // though tokens are unique UUIDs/JWTs, this ensures robustness)
+    await prisma.refreshToken.upsert({
+      where: { token_hash: refreshToken },
+      update: {
+        expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        revoked_at: null,
+      },
+      create: {
         user_id: user.id,
-        token_hash: refreshToken, // For simplicity using full token as hash here
-        expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+        token_hash: refreshToken,
+        expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       }
     });
 

@@ -89,6 +89,47 @@ export const updateVideoProgress = async (req: AuthRequest, res: Response): Prom
       }
     });
 
+    // 4. Check for Subject Completion & Generate Certificate
+    if (is_completed) {
+      const subjectId = currentVideo.section.subject_id;
+      
+      const allSubjectVideos = await prisma.video.findMany({
+        where: { section: { subject_id: subjectId } }
+      });
+
+      const completedVideos = await prisma.videoProgress.findMany({
+        where: {
+          user_id: userId,
+          is_completed: true,
+          video: { section: { subject_id: subjectId } }
+        }
+      });
+
+      if (completedVideos.length === allSubjectVideos.length) {
+        // All videos completed! Check if certificate already exists
+        const existingCert = await prisma.certificate.findUnique({
+          where: {
+            user_id_subject_id: {
+              user_id: userId,
+              subject_id: subjectId
+            }
+          }
+        });
+
+        if (!existingCert) {
+          const certCode = `LMS-${new Date().getFullYear()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+          await prisma.certificate.create({
+            data: {
+              user_id: userId,
+              subject_id: subjectId,
+              certificate_code: certCode,
+            }
+          });
+          console.log(`🎓 Certificate generated for user ${userId} in subject ${subjectId}`);
+        }
+      }
+    }
+
     res.status(200).json({ message: 'Progress updated', progress });
   } catch (error) {
     console.error(error);

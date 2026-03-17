@@ -108,3 +108,33 @@ export const verifyCertificate = async (req: AuthRequest, res: Response): Promis
     res.status(500).json({ message: 'Error verifying certificate' });
   }
 };
+
+export const getAllUserCertificates = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
+
+    const certificates = await prisma.certificate.findMany({
+      where: { user_id: userId },
+      include: {
+        subject: {
+          select: {
+            title: true,
+            tutor_name: true,
+            id: true,
+          }
+        }
+      },
+      orderBy: { issued_at: 'desc' }
+    });
+
+    res.status(200).json(certificates);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error fetching certificates' });
+  }
+};

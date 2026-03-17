@@ -30,6 +30,7 @@ async function main() {
       title: 'Mastering React & Next.js',
       slug: 'react-nextjs-mastery',
       category: 'Programming',
+      tutor_name: 'Dr. Sarah Wilson',
       description: 'The ultimate guide to building modern web applications with React, Next.js, and Tailwind CSS.',
       is_published: true,
       sections: [
@@ -55,6 +56,7 @@ async function main() {
       title: 'Python for Data Science',
       slug: 'python-data-science',
       category: 'Artificial Intelligence',
+      tutor_name: 'Prof. Michael Chen',
       description: 'Learn Python programming from scratch and dive into data analysis with Pandas, Numpy, and Matplotlib.',
       is_published: true,
       sections: [

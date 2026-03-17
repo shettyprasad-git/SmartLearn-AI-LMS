@@ -8,21 +8,18 @@ async function main() {
 
   // 1. Create Admin User
   const adminEmail = 'admin@smartlearn.ai';
-  const existingAdmin = await prisma.user.findUnique({ where: { email: adminEmail } });
-
-  if (!existingAdmin) {
-    const passwordHash = await hash('admin123', 10);
-    await prisma.user.create({
-      data: {
-        email: adminEmail,
-        name: 'SmartLearn Admin',
-        password_hash: passwordHash,
-      },
-    });
-    console.log('✅ Admin user created (admin@smartlearn.ai / admin123)');
-  } else {
-    console.log('ℹ️ Admin user already exists');
-  }
+  const passwordHash = await hash('admin123', 10);
+  
+  await prisma.user.upsert({
+    where: { email: adminEmail },
+    update: { password_hash: passwordHash },
+    create: {
+      email: adminEmail,
+      name: 'SmartLearn Admin',
+      password_hash: passwordHash,
+    },
+  });
+  console.log('✅ Admin user ready (admin@smartlearn.ai / admin123)');
 
   // 2. Create Starter Courses
   const subjects = [
@@ -73,41 +70,56 @@ async function main() {
   ];
 
   for (const s of subjects) {
-    const existing = await prisma.subject.findUnique({ where: { slug: s.slug } });
-    if (!existing) {
-      const createdSubject = await prisma.subject.create({
-        data: {
-          title: s.title,
-          slug: s.slug,
-          category: s.category,
-          description: s.description,
-          is_published: s.is_published,
+    const createdSubject = await prisma.subject.upsert({
+      where: { slug: s.slug },
+      update: {
+        title: s.title,
+        category: s.category,
+        tutor_name: s.tutor_name,
+        description: s.description,
+      },
+      create: {
+        title: s.title,
+        slug: s.slug,
+        category: s.category,
+        tutor_name: s.tutor_name,
+        description: s.description,
+        is_published: s.is_published,
+      },
+    });
+
+    for (const sect of s.sections) {
+      const createdSection = await prisma.section.upsert({
+        where: { 
+          // Since we don't have a natural unique key for sections besides title within a subject,
+          // we'll just find or create. For seeder it's fine.
+          id: (await prisma.section.findFirst({ where: { subject_id: createdSubject.id, title: sect.title } }))?.id || ""
+        },
+        update: { order_index: sect.order },
+        create: {
+          subject_id: createdSubject.id,
+          title: sect.title,
+          order_index: sect.order,
         },
       });
 
-      for (const sect of s.sections) {
-        const createdSection = await prisma.section.create({
-          data: {
-            subject_id: createdSubject.id,
-            title: sect.title,
-            order_index: sect.order,
+      for (const v of sect.videos) {
+        await prisma.video.upsert({
+          where: {
+            id: (await prisma.video.findFirst({ where: { section_id: createdSection.id, youtube_video_id: v.url } }))?.id || ""
           },
-        });
-
-        await prisma.video.createMany({
-          data: sect.videos.map((v) => ({
+          update: { title: v.title, order_index: v.order },
+          create: {
             section_id: createdSection.id,
             title: v.title,
             youtube_video_id: v.url,
             order_index: v.order,
             description: `A lesson on ${v.title}.`,
-          })),
+          }
         });
       }
-      console.log(`✅ Created course: ${s.title}`);
-    } else {
-      console.log(`ℹ️ Course already exists: ${s.title}`);
     }
+    console.log(`✅ Course synced: ${s.title}`);
   }
 
   console.log('🌿 Seeding complete!');

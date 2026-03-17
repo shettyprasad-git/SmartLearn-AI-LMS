@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import type { AuthRequest } from '../../middleware/authMiddleware.js';
 import prisma from '../../config/db.js';
+import { verifyAccessToken } from '../../utils/jwt.js';
 
 export const getAllSubjects = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -33,6 +34,19 @@ export const getAllSubjects = async (req: Request, res: Response): Promise<void>
 export const getSubjectById = async (req: Request, res: Response): Promise<void> => {
   try {
     const { subjectId } = req.params;
+    const authHeader = req.headers.authorization;
+    let userId: string | null = null;
+
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+      if (token) {
+        const decoded = verifyAccessToken(token);
+        if (decoded) {
+          userId = decoded.userId;
+        }
+      }
+    }
+
     const subject = await prisma.subject.findUnique({
       where: { id: subjectId as string },
       include: {
@@ -52,7 +66,20 @@ export const getSubjectById = async (req: Request, res: Response): Promise<void>
       return;
     }
 
-    res.status(200).json(subject);
+    let isEnrolled = false;
+    if (userId) {
+      const enrollment = await prisma.enrollment.findUnique({
+        where: {
+          user_id_subject_id: {
+            user_id: userId,
+            subject_id: subject.id,
+          },
+        },
+      });
+      isEnrolled = !!enrollment;
+    }
+
+    res.status(200).json({ ...subject, isEnrolled });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error fetching subject details' });

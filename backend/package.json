@@ -7,6 +7,7 @@
     "dev": "tsx watch src/server.ts",
     "build": "npx prisma generate && npx prisma db push && tsc",
     "start": "node dist/server.js",
+    "seed": "tsx src/config/seeder.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

@@ -34,7 +34,7 @@ export const getSubjectById = async (req: Request, res: Response): Promise<void>
   try {
     const { subjectId } = req.params;
     const subject = await prisma.subject.findUnique({
-      where: { id: subjectId },
+      where: { id: subjectId as string },
       include: {
         sections: {
           orderBy: { order_index: 'asc' },

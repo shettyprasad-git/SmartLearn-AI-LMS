@@ -4,8 +4,24 @@ import prisma from '../../config/db.js';
 
 export const getAllSubjects = async (req: Request, res: Response): Promise<void> => {
   try {
+    const { category, search } = req.query;
+
+    const where: any = { is_published: true };
+
+    if (category && category !== 'All') {
+      where.category = category as string;
+    }
+
+    if (search) {
+      where.OR = [
+        { title: { contains: search as string } },
+        { description: { contains: search as string } },
+      ];
+    }
+
     const subjects = await prisma.subject.findMany({
-      where: { is_published: true },
+      where,
+      orderBy: { created_at: 'desc' }
     });
     res.status(200).json(subjects);
   } catch (error) {

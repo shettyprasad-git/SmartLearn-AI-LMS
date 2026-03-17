@@ -7,7 +7,7 @@ const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
 
 export const importPlaylist = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { playlistId } = req.body;
+    const { playlistId, category } = req.body;
 
     if (!playlistId) {
       res.status(400).json({ message: 'Playlist ID is required' });
@@ -52,7 +52,8 @@ export const importPlaylist = async (req: Request, res: Response): Promise<void>
       data: {
         title: playlistData.title,
         description: playlistData.description,
-        slug: playlistData.title.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, ''),
+        slug: `${playlistData.title.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '')}-${Date.now()}`,
+        category: category || "Others",
         is_published: true,
       }
     });

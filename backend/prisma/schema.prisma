@@ -24,6 +24,7 @@ model Subject {
   id           String    @id @default(uuid())
   title        String
   slug         String    @unique
+  category     String    @default("Others")
   description  String?   @db.Text
   is_published Boolean   @default(false)
   created_at   DateTime  @default(now())

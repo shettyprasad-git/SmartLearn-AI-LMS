@@ -9,7 +9,8 @@
     // See also https://aka.ms/tsconfig/module
     "module": "nodenext",
     "target": "esnext",
-    // and npm install -D @types/node
+    "types": ["node", "express", "cookie-parser", "jsonwebtoken", "cors"],
+    "typeRoots": ["./node_modules/@types"],
 
     // Other Outputs
     "sourceMap": true,

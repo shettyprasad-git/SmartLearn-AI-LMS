@@ -1,0 +1,147 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password_hash String
+  name          String
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+
+  enrollments   Enrollment[]
+  videoProgress VideoProgress[]
+  refreshTokens RefreshToken[]
+  certificates  Certificate[]
+}
+
+model Subject {
+  id           String    @id @default(uuid())
+  title        String
+  slug         String    @unique
+  description  String?   @db.Text
+  is_published Boolean   @default(false)
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
+
+  sections     Section[]
+  enrollments  Enrollment[]
+  certificates Certificate[]
+}
+
+model Section {
+  id          String   @id @default(uuid())
+  subject_id  String
+  title       String
+  order_index Int
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  subject     Subject  @relation(fields: [subject_id], references: [id], onDelete: Cascade)
+  videos      Video[]
+}
+
+model Video {
+  id               String   @id @default(uuid())
+  section_id       String
+  title            String
+  description      String?  @db.Text
+  youtube_video_id String
+  order_index      Int
+  duration_seconds Int      @default(0)
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  section          Section  @relation(fields: [section_id], references: [id], onDelete: Cascade)
+  progress         VideoProgress[]
+  transcripts      VideoTranscript[]
+  notes            VideoNote[]
+  quizzes          VideoQuiz[]
+}
+
+model Enrollment {
+  id         String   @id @default(uuid())
+  user_id    String
+  subject_id String
+  created_at DateTime @default(now())
+
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  subject    Subject  @relation(fields: [subject_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, subject_id])
+}
+
+model VideoProgress {
+  id                    String    @id @default(uuid())
+  user_id               String
+  video_id              String
+  last_position_seconds Int       @default(0)
+  is_completed          Boolean   @default(false)
+  completed_at          DateTime?
+  created_at            DateTime  @default(now())
+  updated_at            DateTime  @updatedAt
+
+  user                  User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  video                 Video     @relation(fields: [video_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, video_id])
+}
+
+model RefreshToken {
+  id         String    @id @default(uuid())
+  user_id    String
+  token_hash String    @unique
+  expires_at DateTime
+  revoked_at DateTime?
+  created_at DateTime  @default(now())
+
+  user       User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model VideoTranscript {
+  id         String   @id @default(uuid())
+  video_id   String
+  transcript String   @db.LongText
+  created_at DateTime @default(now())
+
+  video      Video    @relation(fields: [video_id], references: [id], onDelete: Cascade)
+}
+
+model VideoNote {
+  id              String   @id @default(uuid())
+  video_id        String
+  summary         String   @db.Text
+  key_points      String   @db.Text // JSON string
+  important_terms String   @db.Text // JSON string
+  created_at      DateTime @default(now())
+
+  video           Video    @relation(fields: [video_id], references: [id], onDelete: Cascade)
+}
+
+model VideoQuiz {
+  id         String   @id @default(uuid())
+  video_id   String
+  questions  String   @db.LongText // JSON array of 5 MCQs
+  created_at DateTime @default(now())
+
+  video      Video    @relation(fields: [video_id], references: [id], onDelete: Cascade)
+}
+
+model Certificate {
+  id               String   @id @default(uuid())
+  user_id          String
+  subject_id       String
+  certificate_code String   @unique // LMS-YYYY-XXXX
+  issued_at        DateTime @default(now())
+
+  user             User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  subject          Subject  @relation(fields: [subject_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, subject_id])
+}

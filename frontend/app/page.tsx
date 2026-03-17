@@ -6,6 +6,7 @@ import { Play, BookOpen, Clock, Trophy, ArrowRight, Zap } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import apiClient from "@/lib/apiClient";
+import { cn } from "@/lib/utils";
 
 export default function Home() {
   const { user, isAuthenticated } = useAuthStore();

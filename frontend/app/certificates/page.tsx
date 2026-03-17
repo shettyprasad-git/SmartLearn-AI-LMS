@@ -12,6 +12,7 @@ import {
   ArrowRight
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 import Link from "next/link";
 
 export default function CertificatesPage() {
@@ -137,6 +138,3 @@ export default function CertificatesPage() {
   );
 }
 
-function cn(...inputs: any[]) {
-  return inputs.filter(Boolean).join(" ");
-}

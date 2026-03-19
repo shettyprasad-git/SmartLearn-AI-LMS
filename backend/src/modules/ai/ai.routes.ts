@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { chatTutor, generateNotes, generateQuiz } from './ai.controller.js';
+import { generateRoadmap } from './roadmap.controller.js';
 import { authenticate } from '../../middleware/authMiddleware.js';
 
 const router = Router();
@@ -7,6 +8,7 @@ const router = Router();
 router.use(authenticate);
 
 router.post('/chat', chatTutor);
+router.post('/generate-roadmap', generateRoadmap);
 router.post('/videos/:videoId/generate-notes', generateNotes);
 router.post('/videos/:videoId/generate-quiz', generateQuiz);
 

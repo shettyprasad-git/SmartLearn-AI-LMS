@@ -21,6 +21,8 @@ export default function ProfilePage() {
   const { user, logout } = useAuthStore();
   const [analytics, setAnalytics] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [newName, setNewName] = useState(user?.name || "");
 
   useEffect(() => {
     if (user) {
@@ -28,10 +30,21 @@ export default function ProfilePage() {
         .then(res => setAnalytics(res.data))
         .catch(err => console.error(err))
         .finally(() => setLoading(false));
+      setNewName(user.name);
     }
   }, [user]);
 
-  if (!user) return <div className="p-10 text-white">Please login to view profile.</div>;
+  const handleUpdateProfile = async () => {
+    try {
+      await apiClient.put("/auth/profile", { name: newName });
+      // Update local store if needed, or just refresh
+      window.location.reload();
+    } catch (err) {
+      alert("Failed to update profile");
+    }
+  };
+
+  if (!user) return <div className="p-10 text-white font-black uppercase tracking-tighter text-3xl">Please login to view profile.</div>;
 
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-10 space-y-10">
@@ -41,31 +54,60 @@ export default function ProfilePage() {
             {user.name.charAt(0)}
           </div>
           <div className="absolute inset-0 bg-primary blur-3xl opacity-20 group-hover:opacity-40 transition-opacity" />
-          <button className="absolute bottom-2 right-2 p-3 bg-white text-black rounded-2xl shadow-xl hover:scale-110 active:scale-95 transition-all z-20">
+          <button 
+            onClick={() => setIsEditing(!isEditing)}
+            className={cn(
+              "absolute bottom-2 right-2 p-3 rounded-2xl shadow-xl hover:scale-110 active:scale-95 transition-all z-20",
+              isEditing ? "bg-primary text-white" : "bg-white text-black"
+            )}
+          >
             <Edit2 className="w-4 h-4" />
           </button>
         </div>
 
         <div className="flex-1 text-center md:text-left space-y-4">
           <div className="space-y-1">
-             <h1 className="text-4xl font-black text-white">{user.name}</h1>
-             <p className="text-muted-foreground flex items-center justify-center md:justify-start gap-2">
+             {isEditing ? (
+               <div className="flex flex-col md:flex-row gap-3 items-center">
+                 <input 
+                   type="text" 
+                   value={newName} 
+                   onChange={(e) => setNewName(e.target.value)}
+                   className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white text-2xl font-black focus:outline-none focus:border-primary"
+                 />
+                 <button 
+                   onClick={handleUpdateProfile}
+                   className="px-6 py-2 bg-primary text-white rounded-xl font-bold hover:bg-primary/80 transition-all text-sm"
+                 >
+                   Save
+                 </button>
+               </div>
+             ) : (
+               <h1 className="text-4xl font-black text-white tracking-tighter uppercase">{user.name}</h1>
+             )}
+             <p className="text-muted-foreground flex items-center justify-center md:justify-start gap-2 text-sm font-medium">
                 <Mail className="w-4 h-4" /> {user.email}
              </p>
           </div>
           <div className="flex items-center justify-center md:justify-start gap-3">
-             <span className="bg-primary/20 text-primary px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-primary/20">Student</span>
-             <span className="bg-white/5 text-muted-foreground px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/5">Joined 2026</span>
+             <span className="bg-primary/20 text-primary px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-primary/20">Certified Student</span>
+             <span className="bg-white/5 text-muted-foreground px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/5">Member Premium</span>
           </div>
         </div>
 
         <div className="flex items-center gap-4">
-           <button className="p-4 glass rounded-2xl text-muted-foreground hover:text-white transition-all">
+           <button 
+             onClick={() => alert("Settings coming soon! Account security is our priority.")}
+             className="p-4 glass rounded-2xl text-muted-foreground hover:text-white transition-all hover:bg-white/10"
+           >
               <Settings className="w-6 h-6" />
            </button>
            <button 
-             onClick={logout}
-             className="px-8 py-4 bg-red-500/10 text-red-500 border border-red-500/20 rounded-2xl font-bold hover:bg-red-500 hover:text-white transition-all"
+             onClick={() => {
+               logout();
+               window.location.href = "/";
+             }}
+             className="px-8 py-4 bg-red-500/10 text-red-500 border border-red-500/20 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-red-500 hover:text-white transition-all shadow-xl shadow-red-500/5 hover:scale-105 active:scale-95"
            >
               Logout
            </button>

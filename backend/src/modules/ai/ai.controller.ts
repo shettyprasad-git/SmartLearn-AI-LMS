@@ -1,26 +1,42 @@
 import type { Response } from 'express';
 import type { AuthRequest } from '../../middleware/authMiddleware.js';
 import prisma from '../../config/db.js';
+import { HfInference } from '@huggingface/inference';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
+const MODEL = "mistralai/Mistral-7B-Instruct-v0.2";
 
 export const chatTutor = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { videoId, question } = req.body;
 
-    // 1. Fetch video transcript for context
     const videoTranscript = await prisma.videoTranscript.findFirst({
       where: { video_id: videoId }
     });
 
     const context = videoTranscript?.transcript || 'No transcript available for this video.';
 
-    // 2. Call AI Service (Mocked for now)
-    // In production, you would call OpenAI/Gemini here with the context and question
-    const aiResponse = `Hello! Based on the video content, here is the answer to your question: "${question}". [MOCKED AI RESPONSE: The video explains that ${context.substring(0, 100)}...]`;
+    const prompt = `[INST] You are an expert AI tutor for the SmartLearn LMS. 
+Based on the following video transcript context, answer the student's question accurately and helpfully.
+Context: ${context.substring(0, 3000)}
+Question: ${question} [/INST]`;
 
-    res.status(200).json({ response: aiResponse });
+    const response = await hf.textGeneration({
+      model: MODEL,
+      inputs: prompt,
+      parameters: {
+        max_new_tokens: 500,
+        temperature: 0.7,
+      }
+    });
+
+    res.status(200).json({ response: response.generated_text.replace(prompt, '').trim() });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'AI Tutor service error' });
+    console.error('AI Tutor Error:', error);
+    res.status(500).json({ message: 'AI Tutor service error', error: (error as any).message });
   }
 };
 
@@ -34,56 +50,91 @@ export const generateNotes = async (req: AuthRequest, res: Response): Promise<vo
        return;
     }
 
-    // Mocked Note Generation
+    const prompt = `[INST] You are an expert educator. Create comprehensive study notes based on the following transcript.
+Provide a summary, a list of at least 5 key points, and 3 important technical terms with definitions.
+Format the response strictly as JSON with keys: "summary", "key_points" (array), "important_terms" (array of strings like "Term: Definition").
+Transcript: ${transcript.transcript.substring(0, 3000)} [/INST]`;
+
+    const response = await hf.textGeneration({
+      model: MODEL,
+      inputs: prompt,
+      parameters: {
+        max_new_tokens: 1000,
+        temperature: 0.5,
+      }
+    });
+
+    let aiOutput = response.generated_text.replace(prompt, '').trim();
+    // Rough cleanup if prompt isn't perfectly removed
+    const jsonStart = aiOutput.indexOf('{');
+    const jsonEnd = aiOutput.lastIndexOf('}') + 1;
+    if (jsonStart !== -1 && jsonEnd !== -1) {
+      aiOutput = aiOutput.substring(jsonStart, jsonEnd);
+    }
+
+    const parsedNotes = JSON.parse(aiOutput);
+
     const notes = await prisma.videoNote.upsert({
-      where: { id: videoId }, // Using videoId as ID for simplicity or composite unique
+      where: { video_id: videoId },
       update: {
-        summary: 'This video covers the basics of the topic...',
-        key_points: JSON.stringify(['Point 1', 'Point 2', 'Point 3']),
-        important_terms: JSON.stringify(['Term A', 'Term B']),
+        summary: parsedNotes.summary,
+        key_points: JSON.stringify(parsedNotes.key_points),
+        important_terms: JSON.stringify(parsedNotes.important_terms),
       },
       create: {
-        id: videoId,
         video_id: videoId,
-        summary: 'This video covers the basics of the topic...',
-        key_points: JSON.stringify(['Point 1', 'Point 2', 'Point 3']),
-        important_terms: JSON.stringify(['Term A', 'Term B']),
+        summary: parsedNotes.summary,
+        key_points: JSON.stringify(parsedNotes.key_points),
+        important_terms: JSON.stringify(parsedNotes.important_terms),
       }
     });
 
     res.status(200).json(notes);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error generating notes' });
+    console.error('Note Generation Error:', error);
+    res.status(500).json({ message: 'Error generating notes', error: (error as any).message });
   }
 };
 
 export const generateQuiz = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { videoId } = req.params;
+    const transcript = await prisma.videoTranscript.findFirst({ where: { video_id: videoId } });
+    
+    const context = transcript?.transcript || "General knowledge about this topic.";
 
-    // Mocked Quiz Generation
-    const questions = [
-      { question: 'What is X?', options: ['A', 'B', 'C', 'D'], answer: 'A' },
-      { question: 'How does Y work?', options: ['1', '2', '3', '4'], answer: '2' },
-      { question: 'Why use Z?', options: ['Yes', 'No', 'Maybe', 'Always'], answer: 'Always' },
-      { question: 'When to do W?', options: ['Now', 'Later', 'Never', 'Sometimes'], answer: 'Now' },
-      { question: 'Where is V?', options: ['Here', 'There', 'Everywhere', 'Nowhere'], answer: 'Here' },
-    ];
+    const prompt = `[INST] Create a 5-question multiple choice quiz based on this content. 
+Format strictly as a JSON array of objects with keys: "question", "options" (array of 4), "answer" (the correct option string).
+Context: ${context.substring(0, 3000)} [/INST]`;
+
+    const response = await hf.textGeneration({
+      model: MODEL,
+      inputs: prompt,
+      parameters: {
+        max_new_tokens: 1000,
+        temperature: 0.5,
+      }
+    });
+
+    let aiOutput = response.generated_text.replace(prompt, '').trim();
+    const jsonStart = aiOutput.indexOf('[');
+    const jsonEnd = aiOutput.lastIndexOf(']') + 1;
+    if (jsonStart !== -1 && jsonEnd !== -1) {
+      aiOutput = aiOutput.substring(jsonStart, jsonEnd);
+    }
 
     const quiz = await prisma.videoQuiz.upsert({
-      where: { id: videoId },
-      update: { questions: JSON.stringify(questions) },
+      where: { video_id: videoId },
+      update: { questions: aiOutput },
       create: {
-        id: videoId,
         video_id: videoId,
-        questions: JSON.stringify(questions)
+        questions: aiOutput
       }
     });
 
     res.status(200).json(quiz);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error generating quiz' });
+    console.error('Quiz Generation Error:', error);
+    res.status(500).json({ message: 'Error generating quiz', error: (error as any).message });
   }
 };

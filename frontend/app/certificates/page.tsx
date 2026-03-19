@@ -24,6 +24,8 @@ export default function CertificatesPage() {
   const [certificates, setCertificates] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [verifyCode, setVerifyCode] = useState("");
+  const [verifying, setVerifying] = useState(false);
   
   // Ref for the hidden certificate template used for PDF generation
   const certTemplateRef = useRef<HTMLDivElement>(null);
@@ -41,6 +43,21 @@ export default function CertificatesPage() {
       console.error("Failed to fetch certificates:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleVerify = async () => {
+    if (!verifyCode) return;
+    setVerifying(true);
+    try {
+      const res = await apiClient.get(`/certificates/verify/${verifyCode}`);
+      if (res.data.valid) {
+        alert(`✅ Valid Certificate!\nStudent: ${res.data.userName}\nCourse: ${res.data.courseName}\nIssued: ${formatDate(res.data.issuedAt)}`);
+      }
+    } catch (err) {
+      alert("❌ Invalid Certificate Code. Please check and try again.");
+    } finally {
+      setVerifying(false);
     }
   };
 
@@ -158,15 +175,23 @@ export default function CertificatesPage() {
          </div>
          <div className="space-y-2">
             <h2 className="text-2xl font-black text-white px-2 uppercase tracking-tighter">Verify a Credential</h2>
-            <p className="text-muted-foreground max-w-sm text-sm">Employers can verify the authenticity of your knowledge using the unique ID on your certificate.</p>
+            <p className="text-muted-foreground max-sm text-sm">Employers can verify the authenticity of your knowledge using the unique ID on your certificate.</p>
          </div>
          <div className="relative w-full max-w-sm">
             <input 
               type="text" 
               placeholder="Enter ID (e.g. LMS-2026-XXXX)" 
+              value={verifyCode}
+              onChange={(e) => setVerifyCode(e.target.value)}
               className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 flex items-center justify-center px-6 text-sm text-center focus:outline-none focus:border-primary/50 transition-all font-mono tracking-widest text-white"
             />
-            <button className="w-full mt-4 py-4 bg-white/5 border border-white/10 text-white rounded-2xl font-bold text-xs hover:bg-white/10 transition-all">Verify Now</button>
+            <button 
+              onClick={handleVerify}
+              disabled={verifying}
+              className="w-full mt-4 py-4 bg-white/5 border border-white/10 text-white rounded-2xl font-bold text-xs hover:bg-white/10 transition-all flex items-center justify-center gap-2"
+            >
+              {verifying ? <Loader2 className="w-4 h-4 animate-spin" /> : "Verify Now"}
+            </button>
          </div>
       </section>
 

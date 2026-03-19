@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import type { AuthRequest } from '../../middleware/authMiddleware.js';
 import prisma from '../../config/db.js';
 import { hashPassword, comparePassword } from '../../utils/password.js';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../../utils/jwt.js';
@@ -28,9 +29,12 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     });
 
     res.status(201).json({ message: 'User registered successfully', user });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error registering user' });
+  } catch (error: any) {
+    console.error('Registration Error:', error);
+    res.status(500).json({ 
+      message: 'Error registering user',
+      error: process.env.NODE_ENV === 'production' ? 'Database connection failure' : error.message
+    });
   }
 };
 
@@ -136,5 +140,27 @@ export const logout = async (req: Request, res: Response): Promise<void> => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error logging out' });
+  }
+};
+
+export const updateProfile = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+    const { name } = req.body;
+
+    if (!userId) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: { name }
+    });
+
+    res.status(200).json({ message: 'Profile updated successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error updating profile' });
   }
 };

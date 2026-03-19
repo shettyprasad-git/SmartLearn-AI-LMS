@@ -177,7 +177,7 @@ export default function VideoPlayerPage() {
       <div className="flex-1 flex flex-col min-w-0">
         <div className="aspect-video w-full bg-black relative">
           <YouTube 
-            videoId={video.video_url} 
+            videoId={video.youtube_video_id} 
             opts={playerOptions}
             className="w-full h-full"
             onReady={(e) => playerRef.current = e.target}

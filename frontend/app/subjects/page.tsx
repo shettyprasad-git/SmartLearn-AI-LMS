@@ -7,7 +7,7 @@ import { BookOpen, Search, ArrowRight, Play, Star, Users, Filter, LayoutGrid, Sp
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
-const CATEGORIES = ["All", "Programming", "Artificial Intelligence", "Business", "Design", "Marketing", "Others"];
+const CATEGORIES = ["All", "Programming", "Artificial Intelligence", "Cloud Computing", "Design", "Cybersecurity", "Mobile Dev", "Data Science"];
 
 export default function SubjectsPage() {
   const [subjects, setSubjects] = useState<any[]>([]);

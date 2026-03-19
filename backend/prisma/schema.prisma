@@ -117,7 +117,7 @@ model VideoTranscript {
 
 model VideoNote {
   id              String   @id @default(uuid())
-  video_id        String
+  video_id        String   @unique
   summary         String   @db.Text
   key_points      String   @db.Text // JSON string
   important_terms String   @db.Text // JSON string
@@ -128,7 +128,7 @@ model VideoNote {
 
 model VideoQuiz {
   id         String   @id @default(uuid())
-  video_id   String
+  video_id   String   @unique
   questions  String   @db.LongText // JSON array of 5 MCQs
   created_at DateTime @default(now())
 

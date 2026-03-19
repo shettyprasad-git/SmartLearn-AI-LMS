@@ -89,8 +89,8 @@ export default function SubjectDetailPage() {
       {/* Hero Section */}
       <section className="relative h-80 rounded-[40px] overflow-hidden border border-white/10 group">
         <img 
-          src={`https://img.youtube.com/vi/${subject.slug}/maxresdefault.jpg`} 
-          onError={(e: any) => e.target.src = `https://img.youtube.com/vi/${subject.slug}/0.jpg`}
+          src={subject.thumbnail_url || `https://img.youtube.com/vi/${subject.youtube_id || subject.slug}/maxresdefault.jpg`} 
+          onError={(e: any) => e.target.src = `https://img.youtube.com/vi/${subject.youtube_id || subject.slug}/0.jpg`}
           className="w-full h-full object-cover opacity-40 group-hover:scale-105 transition-transform duration-1000"
           alt=""
         />

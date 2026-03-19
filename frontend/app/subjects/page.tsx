@@ -110,8 +110,7 @@ export default function SubjectsPage() {
         channelTitle: discovery.channelTitle
       });
 
-      // After import, enroll the user
-      await apiClient.post(`/subjects/${res.data.id}/enroll`);
+      // Backend now auto-enrolls during import!
       
       toast.success("Course added to dashboard!", { id: tId });
       fetchLocalSubjects(); // Refresh local list
@@ -292,8 +291,13 @@ export default function SubjectsPage() {
                 <div className="glass-card h-full rounded-[40px] border-white/5 overflow-hidden group-hover:border-primary/30 transition-all hover:translate-y-[-8px] flex flex-col relative shadow-2xl">
                   {subject.thumbnail_url && (
                     <div className="h-48 overflow-hidden relative">
-                      <img src={subject.thumbnail_url} alt={subject.title} className="w-full h-full object-cover group-hover:scale-105 transition-all duration-700" />
-                      <div className="absolute inset-0 bg-primary/10 group-hover:bg-primary/0 transition-all" />
+                      <img 
+          src={subject.thumbnail_url || `https://img.youtube.com/vi/${subject.youtube_id || subject.slug}/maxresdefault.jpg`} 
+          onError={(e: any) => e.target.src = `https://img.youtube.com/vi/${subject.youtube_id || subject.slug}/0.jpg`}
+          className="w-full h-full object-cover opacity-40 group-hover:scale-105 transition-transform duration-1000"
+          alt=""
+        />
+    <div className="absolute inset-0 bg-primary/10 group-hover:bg-primary/0 transition-all" />
                       <div className="absolute top-4 left-4 z-10 px-3 py-1 bg-white/10 backdrop-blur-md border border-white/10 rounded-full text-[10px] font-black text-white uppercase">
                         {subject.category}
                       </div>

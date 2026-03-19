@@ -173,10 +173,10 @@ export default function Home() {
                </div>
 
                <div className="space-y-6">
-                  {analytics?.activeCourses?.length > 0 ? analytics.activeCourses.map((course: any, i: number) => (
-                    <div key={course.id} className="space-y-3">
+                   {analytics?.activeCourses?.length > 0 ? analytics.activeCourses.map((course: any, i: number) => (
+                    <Link key={course.id} href={`/dashboard/courses/${course.id}`} className="block space-y-3 group/course p-2 rounded-2xl hover:bg-white/5 transition-all">
                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-bold text-white tracking-tight">{course.title}</span>
+                          <span className="text-sm font-bold text-white tracking-tight group-hover/course:text-primary transition-colors">{course.title}</span>
                           <span className="text-xs font-black text-muted-foreground">{course.progressPercentage}%</span>
                        </div>
                        <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
@@ -187,7 +187,7 @@ export default function Home() {
                             className={cn("h-full rounded-full shadow-[0_0_15px_rgba(0,0,0,0.5)]", i % 3 === 0 ? "bg-purple-500" : i % 3 === 1 ? "bg-blue-500" : "bg-pink-500")} 
                           />
                        </div>
-                    </div>
+                    </Link>
                   )) : (
                     <div className="py-10 text-center">
                        <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">No Active Enrollments</p>

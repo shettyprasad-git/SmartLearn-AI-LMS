@@ -126,3 +126,26 @@ export const enrollSubject = async (req: AuthRequest, res: Response): Promise<vo
     res.status(500).json({ message: 'Error enrolling in subject' });
   }
 };
+
+export const getMyEnrollments = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
+
+    const enrollments = await prisma.enrollment.findMany({
+      where: { user_id: userId },
+      include: {
+        subject: true
+      },
+      orderBy: { created_at: 'desc' }
+    });
+
+    res.status(200).json(enrollments);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error fetching enrollments' });
+  }
+};

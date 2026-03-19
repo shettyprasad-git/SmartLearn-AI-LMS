@@ -31,6 +31,15 @@ model Subject {
   description  String?   @db.Text
   tutor_name   String?
   is_published Boolean   @default(false)
+  
+  // Discovery Metadata
+  thumbnail_url  String?
+  difficulty     String    @default("Beginner")
+  source_type    String    @default("video") // "video" or "playlist"
+  duration_text  String?
+  youtube_id     String?   @unique
+  view_count     String?
+  
   created_at   DateTime  @default(now())
   updated_at   DateTime  @updatedAt
 
@@ -49,6 +58,8 @@ model Section {
 
   subject     Subject  @relation(fields: [subject_id], references: [id], onDelete: Cascade)
   videos      Video[]
+
+  @@unique([subject_id, title])
 }
 
 model Video {
@@ -68,6 +79,8 @@ model Video {
   notes            VideoNote[]
   quizzes          VideoQuiz[]
   quizSubmissions  QuizSubmission[]
+
+  @@unique([section_id, youtube_video_id])
 }
 
 model Enrollment {

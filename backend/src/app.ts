@@ -12,6 +12,7 @@ import aiRoutes from './modules/ai/ai.routes.js';
 import certificateRoutes from './modules/certificates/certificates.routes.js';
 import analyticsRoutes from './modules/analytics/analytics.routes.js';
 import notificationRoutes from './modules/notifications/notification.routes.js';
+import youtubeRoutes from './modules/youtube/youtube.routes.js';
 import { getRecommendations } from './modules/subjects/recommendations.controller.js';
 import { authenticate } from './middleware/authMiddleware.js';
 
@@ -63,6 +64,7 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/certificates', certificateRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/youtube', youtubeRoutes);
 app.get('/api/recommendations', authenticate, getRecommendations);
 
 // Error handling middleware

@@ -28,9 +28,9 @@ const mainMenuItems = [
 ];
 
 const secondaryMenuItems = [
-  { icon: Users, label: "Community", href: "#" },
+  { icon: Users, label: "Community", href: "/community" },
   { icon: Wand2, label: "AI Tools", href: "/ai-tools" },
-  { icon: LifeBuoy, label: "Support", href: "#" },
+  { icon: LifeBuoy, label: "Support", href: "/support" },
 ];
 
 export default function Sidebar() {

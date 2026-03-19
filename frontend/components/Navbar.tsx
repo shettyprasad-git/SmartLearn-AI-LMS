@@ -143,7 +143,7 @@ export default function Navbar() {
           {/* Settings */}
           <button 
             className="p-3 rounded-2xl hover:bg-white/10 text-muted-foreground hover:text-white transition-all glass-card"
-            onClick={() => router.push("/profile")}
+            onClick={() => router.push("/settings")}
           >
             <Settings className="w-5 h-5" />
           </button>

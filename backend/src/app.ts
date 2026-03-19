@@ -23,11 +23,22 @@ const app: Application = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  'https://smart-learn-ai-lms.vercel.app',
+  'http://localhost:3000'
+].filter(Boolean) as string[];
+
 app.use(cors({
-  origin: [
-    process.env.FRONTEND_URL || 'http://localhost:3000',
-    (process.env.FRONTEND_URL || 'http://localhost:3000') + '/'
-  ],
+  origin: (origin, callback) => {
+    // Allow if no origin (like mobile apps/curl) or if it's in our list or a vercel preview
+    if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+      callback(null, true);
+    } else {
+      console.warn(`CORS blocked for origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
 

@@ -100,6 +100,19 @@ export const enrollSubject = async (req: AuthRequest, res: Response): Promise<vo
       data: {
         user_id: userId,
         subject_id: subjectId,
+      },
+      include: {
+        subject: true
+      }
+    });
+
+    // Create Notification
+    await (prisma as any).notification.create({
+      data: {
+        user_id: userId,
+        title: "New Enrollment",
+        message: `You've successfully enrolled in ${enrollment.subject.title}!`,
+        type: "success"
       }
     });
 

@@ -1,25 +1,56 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Bell, Search, Settings, User, LogOut, Shield, Monitor, CheckCircle2, Info, ChevronDown } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-
-const MOCK_NOTIFICATIONS = [
-  { id: 1, title: "Course Completed", message: "Congratulations! You've finished React Mastery.", time: "2h ago", type: "success" },
-  { id: 2, title: "New AI Feature", message: "Your Global AI Assistant is now online.", time: "5h ago", type: "info" },
-  { id: 3, title: "Certificate Ready", message: "Your Python certificate is ready to download.", time: "1d ago", type: "success" },
-];
+import apiClient from "@/lib/apiClient";
 
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, logout } = useAuthStore();
+  const { user, logout, isAuthenticated } = useAuthStore();
+  const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchNotifications();
+    }
+  }, [isAuthenticated]);
+
+  const fetchNotifications = async () => {
+    try {
+      const res = await apiClient.get("/notifications/me");
+      setNotifications(res.data);
+    } catch (err) {
+      console.error("Failed to fetch notifications", err);
+    }
+  };
+
+  const markRead = async (id: string) => {
+    try {
+      await apiClient.patch(`/notifications/${id}/read`);
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const markAllRead = async () => {
+    try {
+      await apiClient.patch("/notifications/read-all");
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const unreadCount = notifications.filter(n => !n.is_read).length;
 
   if (pathname.includes("/auth")) return null;
 
@@ -50,7 +81,9 @@ export default function Navbar() {
               )}
             >
               <Bell className="w-5 h-5" />
-              <span className="absolute top-3 right-3 w-2.5 h-2.5 bg-primary rounded-full border-2 border-[#0A0A0A]" />
+              {unreadCount > 0 && (
+                <span className="absolute top-3 right-3 w-2.5 h-2.5 bg-primary rounded-full border-2 border-[#0A0A0A]" />
+              )}
             </button>
 
             <AnimatePresence>
@@ -63,11 +96,25 @@ export default function Navbar() {
                 >
                   <div className="flex items-center justify-between">
                     <h4 className="text-sm font-black text-white uppercase tracking-tighter">Notifications</h4>
-                    <span className="text-[10px] font-black text-primary uppercase cursor-pointer hover:underline">Mark all read</span>
+                    {unreadCount > 0 && (
+                      <span 
+                        onClick={markAllRead}
+                        className="text-[10px] font-black text-primary uppercase cursor-pointer hover:underline"
+                      >
+                        Mark all read
+                      </span>
+                    )}
                   </div>
-                  <div className="space-y-3">
-                    {MOCK_NOTIFICATIONS.map(notif => (
-                      <div key={notif.id} className="p-4 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors flex gap-4">
+                  <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 scrollbar-hide">
+                    {notifications.length > 0 ? notifications.map(notif => (
+                      <div 
+                        key={notif.id} 
+                        onClick={() => !notif.is_read && markRead(notif.id)}
+                        className={cn(
+                          "p-4 rounded-2xl transition-all flex gap-4 cursor-pointer",
+                          notif.is_read ? "bg-white/5 opacity-60" : "bg-white/10 border border-white/10"
+                        )}
+                      >
                          <div className={cn(
                            "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0",
                            notif.type === 'success' ? "bg-green-500/20 text-green-400" : "bg-primary/20 text-primary"
@@ -77,10 +124,16 @@ export default function Navbar() {
                          <div className="flex-1 space-y-1">
                             <h5 className="text-xs font-bold text-white leading-none">{notif.title}</h5>
                             <p className="text-[10px] text-muted-foreground leading-snug">{notif.message}</p>
-                            <span className="text-[9px] text-primary font-bold uppercase tracking-widest">{notif.time}</span>
+                            <span className="text-[9px] text-primary font-bold uppercase tracking-widest">
+                              {new Date(notif.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
                          </div>
                       </div>
-                    ))}
+                    )) : (
+                      <div className="py-10 text-center">
+                        <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">No notifications</p>
+                      </div>
+                    )}
                   </div>
                 </motion.div>
               )}

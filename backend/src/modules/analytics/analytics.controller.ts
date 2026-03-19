@@ -43,11 +43,57 @@ export const getMyAnalytics = async (req: AuthRequest, res: Response): Promise<v
     const totalSeconds = completedVideos.reduce((acc: number, curr: any) => acc + (curr.video.duration_seconds || 0), 0);
     const learningHours = Math.round((totalSeconds / 3600) * 10) / 10;
 
+    // 5. Active Courses & Detailed Progress
+    const enrollments = await prisma.enrollment.findMany({
+      where: { user_id: userId },
+      include: {
+        subject: {
+          include: {
+            sections: {
+              include: {
+                videos: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    const activeCourses = enrollments.map(enrol => {
+      const allSubjectVideos = enrol.subject.sections.flatMap(s => s.videos);
+      const totalSubjectVideos = allSubjectVideos.length;
+      
+      const completedSubjectVideos = allSubjectVideos.filter(v => 
+        completedVideos.some(cv => cv.video_id === v.id)
+      ).length;
+
+      const progress = totalSubjectVideos > 0 
+        ? Math.round((completedSubjectVideos / totalSubjectVideos) * 100) 
+        : 0;
+
+      return {
+        id: enrol.subject_id,
+        title: enrol.subject.title,
+        progressPercentage: progress
+      };
+    });
+
+    // 6. Global Progress (Total completed / Total in all enrolled subjects)
+    const totalEnrolledVideos = enrollments.reduce((acc, curr) => {
+      return acc + curr.subject.sections.flatMap(s => s.videos).length;
+    }, 0);
+
+    const globalProgress = totalEnrolledVideos > 0 
+      ? Math.round((videosWatched / totalEnrolledVideos) * 100) 
+      : 0;
+
     res.status(200).json({
       enrolledCount,
       completedCount,
       videosWatched,
       learningHours,
+      globalProgress,
+      activeCourses,
       recentProgress: completedVideos.slice(0, 5).map((v: any) => ({
         videoTitle: v.video.title,
         completedAt: v.completed_at

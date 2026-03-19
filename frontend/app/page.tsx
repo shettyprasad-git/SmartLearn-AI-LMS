@@ -119,7 +119,18 @@ export default function Home() {
                <div className="relative w-48 h-48 mt-10">
                   <svg className="w-full h-full transform -rotate-90">
                     <circle cx="96" cy="96" r="80" fill="transparent" stroke="rgba(255,255,255,0.05)" strokeWidth="16" />
-                    <circle cx="96" cy="96" r="80" fill="transparent" stroke="url(#gradient)" strokeWidth="16" strokeDasharray={502.4} strokeDashoffset={502.4 * (1 - 0.74)} strokeLinecap="round" className="transition-all duration-1000" />
+                    <circle 
+                      cx="96" 
+                      cy="96" 
+                      r="80" 
+                      fill="transparent" 
+                      stroke="url(#gradient)" 
+                      strokeWidth="16" 
+                      strokeDasharray={502.4} 
+                      strokeDashoffset={502.4 * (1 - (analytics?.globalProgress || 0) / 100)} 
+                      strokeLinecap="round" 
+                      className="transition-all duration-1000" 
+                    />
                     <defs>
                       <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
                         <stop offset="0%" stopColor="#a855f7" />
@@ -128,18 +139,18 @@ export default function Home() {
                     </defs>
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                     <span className="text-5xl font-black text-white leading-none">74%</span>
+                     <span className="text-5xl font-black text-white leading-none">{analytics?.globalProgress || 0}%</span>
                      <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-2">Complete</span>
                   </div>
                </div>
 
-               {/* Wavy Activity Chart Mockup */}
+               {/* Wavy Activity Chart Mockup - Still partially mock but can use analytics.videosWatched to scale */}
                <div className="mt-12 w-full flex items-end justify-between h-20 gap-2">
                   {[40, 70, 45, 90, 65, 80, 50, 85].map((h, i) => (
                     <div 
                       key={i} 
                       className="flex-1 bg-primary/20 rounded-t-lg relative group transition-all"
-                      style={{ height: `${h}%` }}
+                      style={{ height: `${Math.min(100, (analytics?.videosWatched || 1) * h / 5)}%` }}
                     >
                        <div className="absolute inset-0 bg-primary opacity-20 group-hover:opacity-100 transition-opacity rounded-t-lg" />
                     </div>
@@ -157,31 +168,31 @@ export default function Home() {
                <div className="flex items-center justify-between">
                   <h3 className="text-lg font-black text-white tracking-tight">Active Courses</h3>
                   <div className="px-3 py-1.5 glass rounded-xl text-[10px] font-black text-white uppercase tracking-widest border-white/5">
-                     Course ↓
+                     Latest ↓
                   </div>
                </div>
 
                <div className="space-y-6">
-                  {[
-                    { title: "AI-Driven Development", prog: 65, color: "bg-purple-500" },
-                    { title: "Machine Learning Fundamentals", prog: 40, color: "bg-blue-500" },
-                    { title: "UX Design Systems", prog: 90, color: "bg-pink-500" },
-                  ].map((course, i) => (
-                    <div key={i} className="space-y-3">
+                  {analytics?.activeCourses?.length > 0 ? analytics.activeCourses.map((course: any, i: number) => (
+                    <div key={course.id} className="space-y-3">
                        <div className="flex items-center justify-between">
                           <span className="text-sm font-bold text-white tracking-tight">{course.title}</span>
-                          <span className="text-xs font-black text-muted-foreground">{course.prog}%</span>
+                          <span className="text-xs font-black text-muted-foreground">{course.progressPercentage}%</span>
                        </div>
                        <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
                           <motion.div 
                             initial={{ width: 0 }}
-                            animate={{ width: `${course.prog}%` }}
+                            animate={{ width: `${course.progressPercentage}%` }}
                             transition={{ duration: 1, delay: i * 0.2 }}
-                            className={cn("h-full rounded-full shadow-[0_0_15px_rgba(0,0,0,0.5)]", course.color)} 
+                            className={cn("h-full rounded-full shadow-[0_0_15px_rgba(0,0,0,0.5)]", i % 3 === 0 ? "bg-purple-500" : i % 3 === 1 ? "bg-blue-500" : "bg-pink-500")} 
                           />
                        </div>
                     </div>
-                  ))}
+                  )) : (
+                    <div className="py-10 text-center">
+                       <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">No Active Enrollments</p>
+                    </div>
+                  )}
                </div>
             </motion.div>
           </div>

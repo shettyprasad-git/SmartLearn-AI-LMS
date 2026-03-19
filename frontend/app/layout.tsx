@@ -3,6 +3,7 @@ import { Outfit } from "next/font/google";
 import "./globals.css";
 import Sidebar from "@/components/Sidebar";
 import Navbar from "@/components/Navbar";
+import GlobalAIChat from "@/components/GlobalAI/GlobalAIChat";
 
 const outfit = Outfit({ subsets: ["latin"] });
 
@@ -26,6 +27,7 @@ export default function RootLayout({
             <main className="flex-1 overflow-y-auto overflow-x-hidden">
               {children}
             </main>
+            <GlobalAIChat />
           </div>
         </div>
       </body>

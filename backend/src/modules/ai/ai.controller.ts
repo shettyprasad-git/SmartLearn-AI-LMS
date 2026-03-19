@@ -13,15 +13,20 @@ export const chatTutor = async (req: AuthRequest, res: Response): Promise<void> 
   try {
     const { videoId, question } = req.body;
 
-    const videoTranscript = await prisma.videoTranscript.findFirst({
-      where: { video_id: videoId }
-    });
+    let context = 'You are a general assistant for the SmartLearn LMS platform.';
 
-    const context = videoTranscript?.transcript || 'No transcript available for this video.';
+    if (videoId) {
+      const videoTranscript = await prisma.videoTranscript.findFirst({
+        where: { video_id: videoId }
+      });
+      if (videoTranscript) {
+        context = `Based on the following video transcript context, answer the student's question accurately. 
+        Context: ${videoTranscript.transcript.substring(0, 3000)}`;
+      }
+    }
 
     const prompt = `[INST] You are an expert AI tutor for the SmartLearn LMS. 
-Based on the following video transcript context, answer the student's question accurately and helpfully.
-Context: ${context.substring(0, 3000)}
+${context}
 Question: ${question} [/INST]`;
 
     const response = await hf.textGeneration({
@@ -75,7 +80,7 @@ Transcript: ${transcript.transcript.substring(0, 3000)} [/INST]`;
     const parsedNotes = JSON.parse(aiOutput);
 
     const notes = await prisma.videoNote.upsert({
-      where: { video_id: videoId },
+      where: { video_id: videoId } as any,
       update: {
         summary: parsedNotes.summary,
         key_points: JSON.stringify(parsedNotes.key_points),
@@ -124,7 +129,7 @@ Context: ${context.substring(0, 3000)} [/INST]`;
     }
 
     const quiz = await prisma.videoQuiz.upsert({
-      where: { video_id: videoId },
+      where: { video_id: videoId } as any,
       update: { questions: aiOutput },
       create: {
         video_id: videoId,

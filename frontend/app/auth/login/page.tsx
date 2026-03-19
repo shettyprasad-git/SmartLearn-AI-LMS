@@ -27,7 +27,9 @@ export default function LoginPage() {
       setAuth(res.data.user, res.data.accessToken);
       router.push("/");
     } catch (err: any) {
-      setError(err.response?.data?.message || "Login failed. Please check your credentials.");
+      console.error("Login full error:", err);
+      const msg = err.response?.data?.message || err.message || "Login failed. Please check your credentials.";
+      setError(msg);
     } finally {
       setLoading(false);
     }

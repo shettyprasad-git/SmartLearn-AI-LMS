@@ -25,7 +25,9 @@ export default function RegisterPage() {
       await apiClient.post("/auth/register", { email, password, name });
       router.push("/auth/login?registered=true");
     } catch (err: any) {
-      setError(err.response?.data?.message || "Registration failed. Please try again.");
+      console.error("Registration full error:", err);
+      const msg = err.response?.data?.message || err.message || "Registration failed. Please try again.";
+      setError(msg);
     } finally {
       setLoading(false);
     }

@@ -23,13 +23,13 @@ const mainMenuItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/" },
   { icon: BookOpen, label: "My Courses", href: "/subjects" },
   { icon: Map, label: "Learning Paths", href: "/learning-paths", badge: "Active" },
-  { icon: FileText, label: "Assignments", href: "#" },
+  { icon: FileText, label: "Assignments", href: "/assignments" },
   { icon: BarChart3, label: "Analytics", href: "/analytics" },
 ];
 
 const secondaryMenuItems = [
   { icon: Users, label: "Community", href: "#" },
-  { icon: Wand2, label: "AI Tools", href: "#" },
+  { icon: Wand2, label: "AI Tools", href: "/ai-tools" },
   { icon: LifeBuoy, label: "Support", href: "#" },
 ];
 

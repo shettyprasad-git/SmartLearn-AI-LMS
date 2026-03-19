@@ -164,3 +164,38 @@ export const updateProfile = async (req: AuthRequest, res: Response): Promise<vo
     res.status(500).json({ message: 'Error updating profile' });
   }
 };
+
+export const changePassword = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+    const { currentPassword, newPassword } = req.body;
+
+    if (!userId) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      res.status(404).json({ message: 'User not found' });
+      return;
+    }
+
+    const isMatch = await comparePassword(currentPassword, user.password_hash);
+    if (!isMatch) {
+      res.status(400).json({ message: 'Incorrect current password' });
+      return;
+    }
+
+    const password_hash = await hashPassword(newPassword);
+    await prisma.user.update({
+      where: { id: userId },
+      data: { password_hash }
+    });
+
+    res.status(200).json({ message: 'Password updated successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error updating password' });
+  }
+};

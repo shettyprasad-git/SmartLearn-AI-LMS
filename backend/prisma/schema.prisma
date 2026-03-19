@@ -20,6 +20,7 @@ model User {
   refreshTokens RefreshToken[]
   certificates  Certificate[]
   notifications Notification[]
+  quizSubmissions QuizSubmission[]
 }
 
 model Subject {
@@ -66,6 +67,7 @@ model Video {
   transcripts      VideoTranscript[]
   notes            VideoNote[]
   quizzes          VideoQuiz[]
+  quizSubmissions  QuizSubmission[]
 }
 
 model Enrollment {
@@ -159,4 +161,18 @@ model Notification {
   created_at DateTime @default(now())
 
   user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model QuizSubmission {
+  id         String   @id @default(uuid())
+  user_id    String
+  video_id   String
+  score      Int      // 0-100
+  answers    String   @db.LongText // JSON array of choice indices
+  created_at DateTime @default(now())
+
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  video      Video    @relation(fields: [video_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, video_id])
 }

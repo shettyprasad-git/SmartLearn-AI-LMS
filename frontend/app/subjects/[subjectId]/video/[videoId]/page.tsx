@@ -14,7 +14,8 @@ import {
   CheckCircle2,
   Menu,
   X,
-  Sparkles
+  Sparkles,
+  Award
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -37,6 +38,8 @@ export default function VideoPlayerPage() {
   const [chatHistory, setChatHistory] = useState<any[]>([]);
   const [notes, setNotes] = useState<any>(null);
   const [quiz, setQuiz] = useState<any>(null);
+  const [userAnswers, setUserAnswers] = useState<number[]>([]);
+  const [quizResult, setQuizResult] = useState<any>(null);
   const [aiLoading, setAiLoading] = useState(false);
 
   useEffect(() => {
@@ -61,6 +64,8 @@ export default function VideoPlayerPage() {
       setChatHistory([]);
       setNotes(null);
       setQuiz(null);
+      setUserAnswers([]);
+      setQuizResult(null);
 
     } catch (err) {
       console.error(err);
@@ -115,10 +120,40 @@ export default function VideoPlayerPage() {
     try {
       const res = await apiClient.post(`/ai/videos/${videoId}/generate-quiz`);
       setQuiz(JSON.parse(res.data.questions));
+      setUserAnswers(new Array(JSON.parse(res.data.questions).length).fill(-1));
     } catch (err) {
       console.error(err);
     } finally {
       setAiLoading(false);
+    }
+  };
+
+  const handleSubmitQuiz = async () => {
+    if (userAnswers.includes(-1)) {
+        alert("Please answer all questions before submitting.");
+        return;
+    }
+
+    let correctCount = 0;
+    quiz.forEach((q: any, i: number) => {
+      // Assuming a standard format where we might need to find the correct index
+      // For now, let's treat the first option as correct or check for a 'correct' field if provided
+      // Mistral usually gives the correct one as the last or first, let's look for indicator
+      if (q.correct_option === userAnswers[i] || q.correctIndex === userAnswers[i]) {
+        correctCount++;
+      }
+    });
+
+    const score = Math.round((correctCount / quiz.length) * 100);
+    
+    try {
+      const res = await apiClient.post(`/progress/videos/${videoId}/quiz`, {
+          score,
+          answers: userAnswers
+      });
+      setQuizResult(res.data.submission);
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -281,19 +316,52 @@ export default function VideoPlayerPage() {
                 >
                   {quiz ? (
                     <div className="space-y-6">
-                       {quiz.map((q: any, i: number) => (
-                         <div key={i} className="glass-card p-6 rounded-3xl border-white/5 space-y-4">
-                            <span className="text-[10px] font-black text-primary uppercase tracking-widest">Question {i + 1}</span>
-                            <h3 className="text-md font-bold text-white">{q.question}</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
-                               {q.options.map((opt: string, optIdx: number) => (
-                                 <button key={optIdx} className="p-4 glass rounded-xl text-sm font-medium hover:bg-white/5 border-white/5 hover:border-primary/30 transition-all text-left">
-                                   {opt}
-                                 </button>
-                               ))}
-                            </div>
-                         </div>
-                       ))}
+                       {quizResult ? (
+                          <div className="glass-premium p-10 rounded-[48px] border-primary/20 text-center space-y-4">
+                             <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center text-primary mx-auto">
+                                <Award className="w-10 h-10" />
+                             </div>
+                             <h3 className="text-2xl font-black text-white uppercase italic">Assessment Complete!</h3>
+                             <p className="text-muted-foreground font-medium">You scored <span className="text-primary text-xl font-black">{quizResult.score}%</span> on this lesson quiz.</p>
+                             <div className="pt-4 flex gap-4 justify-center">
+                                <button onClick={() => setQuizResult(null)} className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline">Retake Quiz</button>
+                                <Link href="/assignments" className="text-[10px] font-black text-white uppercase tracking-widest hover:underline">View All Assignments</Link>
+                             </div>
+                          </div>
+                       ) : (
+                         <>
+                            {quiz.map((q: any, i: number) => (
+                              <div key={i} className="glass-card p-6 rounded-3xl border-white/5 space-y-4">
+                                 <span className="text-[10px] font-black text-primary uppercase tracking-widest">Question {i + 1}</span>
+                                 <h3 className="text-md font-bold text-white">{q.question}</h3>
+                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+                                    {q.options.map((opt: string, optIdx: number) => (
+                                      <button 
+                                        key={optIdx} 
+                                        onClick={() => {
+                                          const newAns = [...userAnswers];
+                                          newAns[i] = optIdx;
+                                          setUserAnswers(newAns);
+                                        }}
+                                        className={cn(
+                                          "p-4 glass rounded-xl text-sm font-medium transition-all text-left border",
+                                          userAnswers[i] === optIdx ? "bg-primary/20 border-primary text-primary" : "border-white/5 hover:bg-white/5 text-muted-foreground"
+                                        )}
+                                      >
+                                        {opt}
+                                      </button>
+                                    ))}
+                                 </div>
+                              </div>
+                            ))}
+                            <button 
+                              onClick={handleSubmitQuiz}
+                              className="w-full py-5 bg-primary text-white font-black uppercase text-xs tracking-widest rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
+                            >
+                              Submit Assessment
+                            </button>
+                         </>
+                       )}
                     </div>
                   ) : (
                     <div className="text-center py-20">

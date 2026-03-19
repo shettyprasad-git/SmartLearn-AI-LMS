@@ -180,6 +180,17 @@ export default function Navbar() {
                   My Profile
                 </button>
                 <div className="h-px bg-white/10 my-1" />
+                  <button 
+                    onClick={() => {
+                      router.push("/settings");
+                      setShowProfileMenu(false);
+                    }}
+                    className="w-full flex items-center gap-3 p-3 rounded-xl text-muted-foreground hover:bg-white/5 hover:text-white transition-all group"
+                  >
+                  <Settings className="w-4 h-4" />
+                  Settings
+                </button>
+                <div className="h-px bg-white/10 my-1" />
                 <button 
                   onClick={logout}
                   className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-red-500/10 text-red-500 transition-all text-sm font-bold"

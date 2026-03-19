@@ -167,3 +167,73 @@ export const getProgressBySubject = async (req: AuthRequest, res: Response): Pro
     res.status(500).json({ message: 'Error fetching progress' });
   }
 };
+
+export const submitQuizResult = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { videoId } = req.params;
+    const { score, answers } = req.body;
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
+
+    const submission = await (prisma as any).quizSubmission.upsert({
+      where: {
+        user_id_video_id: {
+          user_id: userId,
+          video_id: videoId
+        }
+      },
+      update: {
+        score,
+        answers: JSON.stringify(answers),
+        created_at: new Date()
+      },
+      create: {
+        user_id: userId,
+        video_id: videoId,
+        score,
+        answers: JSON.stringify(answers)
+      }
+    });
+
+    res.status(201).json({ message: 'Quiz submitted successfully', submission });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error submitting quiz' });
+  }
+};
+
+export const getMyAssignments = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
+
+    const assignments = await (prisma as any).quizSubmission.findMany({
+      where: { user_id: userId },
+      include: {
+        video: {
+          include: {
+            section: {
+              include: {
+                subject: true
+              }
+            }
+          }
+        }
+      },
+      orderBy: { created_at: 'desc' }
+    });
+
+    res.status(200).json(assignments);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error fetching assignments' });
+  }
+};

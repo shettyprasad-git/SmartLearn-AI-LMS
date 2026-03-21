@@ -83,8 +83,12 @@ SmartLearn uses a **Premium Glassmorphic UI** designed to feel immersive and fut
 ---
 
 ## 📄 License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.---
 
----
+## 👤 Author
 
-Built with ❤️ by the SmartLearn Engineering Team.
+**Durga Prasad**  
+📧 [prasadshetty1275@gmail.com](mailto:prasadshetty1275@gmail.com)  
+🔗 [LinkedIn Profile](https://www.linkedin.com/in/durgaprasadshetty/)
+
+Built with ❤️ by Durga Prasad.

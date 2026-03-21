@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, Suspense } from "react";
 import apiClient from "@/lib/apiClient";
 import Link from "next/link";
 import { 
@@ -28,6 +28,21 @@ import toast from "react-hot-toast";
 const CATEGORIES = ["All", "Programming", "Artificial Intelligence", "Cloud Computing", "Design", "Cybersecurity", "Mobile Dev", "Data Science"];
 
 export default function SubjectsPage() {
+  return (
+    <Suspense fallback={
+      <div className="p-10 space-y-8 animate-pulse">
+        <div className="h-20 bg-white/5 rounded-3xl w-1/3" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+           {[1, 2, 3].map(i => <div key={i} className="h-80 bg-white/5 rounded-[40px]" />)}
+        </div>
+      </div>
+    }>
+      <SubjectsContent />
+    </Suspense>
+  );
+}
+
+function SubjectsContent() {
   const [subjects, setSubjects] = useState<any[]>([]);
   const [discoveries, setDiscoveries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);

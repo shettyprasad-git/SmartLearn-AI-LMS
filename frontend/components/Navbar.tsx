@@ -16,12 +16,32 @@ export default function Navbar() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
       fetchNotifications();
     }
   }, [isAuthenticated]);
+
+  useEffect(() => {
+    const handler = setTimeout(async () => {
+      if (searchQuery.length > 2) {
+        try {
+          const res = await apiClient.get(`/youtube/suggestions?q=${encodeURIComponent(searchQuery)}`);
+          setSuggestions(res.data);
+        } catch (err) {
+          console.error(err);
+        }
+      } else {
+        setSuggestions([]);
+      }
+    }, 300);
+
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
 
   const fetchNotifications = async () => {
     try {
@@ -64,8 +84,41 @@ export default function Navbar() {
         <input 
           type="text" 
           placeholder="Search for courses, lessons, skills..." 
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onFocus={() => setShowSuggestions(true)}
           className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-12 pr-4 text-sm focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all font-medium text-white placeholder:text-muted-foreground/50"
         />
+
+        <AnimatePresence>
+          {showSuggestions && suggestions.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              className="absolute left-0 right-0 mt-3 glass-premium border border-white/10 rounded-[32px] overflow-hidden z-[100] p-4 shadow-2xl"
+            >
+              <div className="space-y-1">
+                {suggestions.map((s, i) => (
+                  <button
+                    key={i}
+                    onClick={() => {
+                      router.push(`/subjects?q=${encodeURIComponent(s)}`);
+                      setSearchQuery(s);
+                      setShowSuggestions(false);
+                    }}
+                    className="w-full text-left px-4 py-3 rounded-2xl hover:bg-white/5 text-sm font-bold text-muted-foreground hover:text-white transition-all flex items-center gap-3 group"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all shrink-0">
+                      <Search className="w-3.5 h-3.5" />
+                    </div>
+                    <span>{s}</span>
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Right Side Tools */}

@@ -21,6 +21,7 @@ import {
   BarChart
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
 
@@ -36,6 +37,16 @@ export default function SubjectsPage() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [error, setError] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    fetchLocalSubjects();
+    const q = searchParams.get("q");
+    if (q) {
+      setSearchTerm(q);
+      handleSearch(q);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     fetchLocalSubjects();
